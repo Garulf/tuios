@@ -459,6 +459,16 @@ func (m *OS) settingsCategories() []settingsCategory {
 		}),
 	}
 
+	// wallpaper.path has no row here. See settingsUIExcluded for why.
+	wallpaper := settingsCategory{
+		Name: "Wallpaper",
+		Items: m.resolveRows([]settingsRow{
+			opt("wallpaper.mode"),
+			opt("wallpaper.dim"),
+			opt("wallpaper.renderer"),
+		}),
+	}
+
 	daemon := settingsCategory{
 		Name: "Daemon",
 		Items: m.resolveRows([]settingsRow{
@@ -509,7 +519,7 @@ func (m *OS) settingsCategories() []settingsCategory {
 
 	return []settingsCategory{
 		appearance, sidebar, dock, behavior,
-		notifications, startup, screenshot, screensaver, spotlight, advanced, daemon,
+		notifications, startup, screenshot, screensaver, spotlight, wallpaper, advanced, daemon,
 		m.hostsCategory(), tape,
 	}
 }

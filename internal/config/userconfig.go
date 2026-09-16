@@ -34,6 +34,9 @@ type UserConfig struct {
 	// screen and dims the rest. Client-local appearance, like the theme. See
 	// spotlight.go.
 	Spotlight SpotlightConfig `toml:"spotlight"`
+	// Wallpaper is the [wallpaper] table: a picture on the empty desktop.
+	// Client-local appearance, like the theme. See wallpaper.go.
+	Wallpaper WallpaperConfig `toml:"wallpaper"`
 	// Dock is the [dock] table: the bar as ordered lists of named components.
 	// It sits outside the option registry for the same reason [hooks] and
 	// [keybindings] do, being file-plane config rather than a settable option.
@@ -532,6 +535,7 @@ func DefaultConfig() *UserConfig {
 		Screenshot:  defaultScreenshotConfig(),
 		Screensaver: defaultScreensaverConfig(),
 		Spotlight:   defaultSpotlightConfig(),
+		Wallpaper:   defaultWallpaperConfig(),
 		Keybindings: KeybindingsConfig{
 			LeaderKey: "ctrl+b",
 			WindowManagement: map[string][]string{
@@ -1107,6 +1111,7 @@ func ParseUserConfig(data []byte) (*UserConfig, error) {
 	fillMissingScreenshot(&cfg, defaultCfg)
 	fillMissingScreensaver(&cfg, defaultCfg)
 	fillMissingSpotlight(&cfg, defaultCfg)
+	fillMissingWallpaper(&cfg, defaultCfg)
 	return &cfg, nil
 }
 

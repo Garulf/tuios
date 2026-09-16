@@ -753,6 +753,29 @@ var optionSpecs = []Option{
 		Default:     "false",
 	},
 
+	// [wallpaper]. Off until a path is set. Client-local, like the theme: the
+	// picture is drawn on this client's host terminal.
+	{
+		Path: "wallpaper.path", Type: OptionString, Section: "wallpaper",
+		Description: "Image drawn on the empty desktop, ~ expanded; empty for none",
+		Default:     "",
+	},
+	{
+		Path: "wallpaper.mode", Type: OptionString, Section: "wallpaper",
+		Description: "fill crops the image to cover the desktop, fit shows all of it letterboxed",
+		Accepted:    WallpaperModes, Default: WallpaperModeFill,
+	},
+	{
+		Path: "wallpaper.dim", Type: OptionInt, Section: "wallpaper",
+		Description: "Percent the image is darkened by",
+		Default:     "0", Min: WallpaperMinDim, Max: WallpaperMaxDim,
+	},
+	{
+		Path: "wallpaper.renderer", Type: OptionString, Section: "wallpaper",
+		Description: "auto draws kitty graphics where the host has them and half-block cells elsewhere; kitty or cells forces one",
+		Accepted:    WallpaperRenderers, Default: WallpaperRendererAuto,
+	},
+
 	// [spotlight]. Off by default, and client-local while it runs: the beam is
 	// what this client's screen looks like, not what the session holds, so a
 	// peer attached to the same panes sees nothing.

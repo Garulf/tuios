@@ -54,6 +54,7 @@ var settingsUIExcluded = map[string]string{
 	// what it took.
 	"screenshot.directory": "a server-side write path; not for a panel any client can open",
 	"screenshot.font_file": "a server-side read path; not for a panel any client can open",
+	"wallpaper.path":       "a client-side read path; not for a panel any client can open",
 }
 
 // TestSettingsPanelReachesEveryOption is the guard this branch was opened for.
