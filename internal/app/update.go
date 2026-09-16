@@ -319,6 +319,11 @@ func (m *OS) Init() tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
+	// Decode the wallpaper, off this goroutine.
+	if cmd := m.wallpaperDecodeCmd(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
 	// Listen for state sync from other clients (daemon/SSH/web mode)
 	if m.StateSyncChan != nil {
 		cmds = append(cmds, ListenForStateSync(m.StateSyncChan))
@@ -1838,6 +1843,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
 		// point: this only decides where to say what it said.
 		m.HandleScreenshotCopied(msg)
 		m.MarkAllDirty()
+		return m, nil
+
+	case wallpaperLoadedMsg:
+		// The picture decoded off the Update goroutine, filed away here so the
+		// state is only ever written on this one.
+		m.applyWallpaper(msg)
 		return m, nil
 
 	case launcherIconsMsg:

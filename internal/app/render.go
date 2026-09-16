@@ -36,6 +36,10 @@ func (m *OS) GetCanvas(render bool) *frameCanvas {
 		m.renderCanvas.Clear()
 	}
 	canvas := m.renderCanvas
+	// The wallpaper goes under everything, so it is drawn into the cleared
+	// canvas before any layer is composed. On a host drawing it as pixels this
+	// is a no-op and the picture is placed after the frame instead.
+	m.blitWallpaperCells(canvas)
 
 	layersPtr := pool.GetLayerSlice()
 	layers := (*layersPtr)[:0]
@@ -880,6 +884,11 @@ func (m *OS) flushGraphicsForView() {
 	// same as the launcher's icons, so it runs past hideImages rather than
 	// through it.
 	m.flushScreenshotGraphicsForFrame()
+	// The wallpaper is placed after the frame for the same reason the icons
+	// are, and hides with the pane images: an overlay with the screen to
+	// itself should not have a picture showing through its gaps, and a resize
+	// drag would smear it across the moving panes.
+	m.flushWallpaperForFrame(hideImages || m.Resizing)
 	if hideImages {
 		if m.KittyPassthrough != nil && m.KittyPassthrough.HasPlacements() {
 			m.KittyPassthrough.HideAllPlacements()

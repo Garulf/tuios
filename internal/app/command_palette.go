@@ -61,7 +61,9 @@ func (m *OS) ApplyReloadedConfig(cfg *config.UserConfig) tea.Cmd {
 	// toggle writes the disagreement back to the file.
 	m.SetSpotlight(cfg.Spotlight.IsEnabled())
 	m.MarkAllDirty()
-	return cmd
+	// The wallpaper reads the new config from the model; this is what decodes
+	// a picture the file just named.
+	return tea.Batch(cmd, m.wallpaperDecodeCmd())
 }
 
 // CommandPaletteItem represents a single command in the command palette.

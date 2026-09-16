@@ -780,6 +780,9 @@ type OS struct {
 	// launcherIconCells is where the last frame put each row's icon, in
 	// panel-relative cells, for the flush that follows the frame.
 	launcherIconCells []launcherIconPlacement
+	// wallpaper is the picture on the empty desktop and what the host holds
+	// of it. See wallpaper.go.
+	wallpaper wallpaperState
 	// pathApps caches the $PATH scan across opens, refreshing only the
 	// directories whose mtime moved.
 	pathApps *applist.Cache
