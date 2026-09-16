@@ -180,14 +180,14 @@ func (m *OS) renderOverlays() []*lipgloss.Layer {
 				Render("n new window")
 		}
 
-		centeredContent := lipgloss.Place(
-			contentW, contentH,
-			lipgloss.Center, lipgloss.Center,
-			box,
-		)
-
-		welcomeLayer := lipgloss.NewLayer(centeredContent).
-			X(m.GetLeftMargin()).Y(m.GetTopMargin()).Z(1).ID("welcome")
+		// The layer is the box alone, placed at the centre, rather than the
+		// box padded out to the whole content region. A padded layer is a
+		// region of blank cells composed over the desktop, which covers a
+		// wallpaper drawn there; the box is what the splash is.
+		boxX := m.GetLeftMargin() + max(contentW-lipgloss.Width(box), 0)/2
+		boxY := m.GetTopMargin() + max(contentH-lipgloss.Height(box), 0)/2
+		welcomeLayer := lipgloss.NewLayer(box).
+			X(boxX).Y(boxY).Z(1).ID("welcome")
 
 		layers = append(layers, welcomeLayer)
 	}

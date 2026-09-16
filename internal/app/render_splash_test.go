@@ -42,14 +42,14 @@ func TestSplashCentersInContentRegion(t *testing.T) {
 			}
 
 			layer := splashLayer(t, m)
-			if layer.GetX() != left {
-				t.Errorf("splash starts at x=%d, want the content region's left edge %d", layer.GetX(), left)
+			if layer.GetX() < left {
+				t.Errorf("splash starts at x=%d, before the content region's left edge %d", layer.GetX(), left)
 			}
 			if r := layer.GetX() + layer.Width(); r > left+width {
 				t.Errorf("splash spans x=%d..%d, the content region ends at %d", layer.GetX(), r, left+width)
 			}
-			if layer.GetY() != m.GetTopMargin() {
-				t.Errorf("splash starts at y=%d, want the content region's top %d", layer.GetY(), m.GetTopMargin())
+			if layer.GetY() < m.GetTopMargin() {
+				t.Errorf("splash starts at y=%d, above the content region's top %d", layer.GetY(), m.GetTopMargin())
 			}
 			if b := layer.GetY() + layer.Height(); b > m.GetTopMargin()+m.GetUsableHeight() {
 				t.Errorf("splash spans y=%d..%d, the content region ends at %d",
@@ -60,31 +60,33 @@ func TestSplashCentersInContentRegion(t *testing.T) {
 }
 
 // TestSplashCentersOnTheBoxNotTheScreen checks the art is centred in the
-// content region rather than merely confined to it: the columns of blank space
+// content region rather than merely confined to it: the columns of desktop
 // on either side of the box have to match.
+//
+// The layer is the box alone, not the box padded out to the region, so the
+// gaps are read from where the layer is placed. A padded layer would cover a
+// wallpaper drawn on the desktop with blank cells.
 func TestSplashCentersOnTheBoxNotTheScreen(t *testing.T) {
 	withSidebar(t, true, "left", 30)
 	m := newNarrowOS(t, 120, 40)
 
 	layer := splashLayer(t, m)
-	var widest, boxLeft int
-	for _, ln := range strings.Split(layer.GetContent(), "\n") {
-		trimmed := strings.TrimRight(ln, " ")
-		if trimmed == "" {
-			continue
-		}
-		if w := lipgloss.Width(trimmed); w > widest {
-			widest = w
-			boxLeft = w - lipgloss.Width(strings.TrimLeft(trimmed, " "))
-		}
-	}
-	if widest == 0 {
+	if layer.Width() == 0 || strings.TrimSpace(layer.GetContent()) == "" {
 		t.Fatal("the splash rendered nothing")
 	}
-	rightGap := m.GetContentWidth() - widest
-	if diff := boxLeft - rightGap; diff < -1 || diff > 1 {
+	left := m.GetLeftMargin()
+	leftGap := layer.GetX() - left
+	rightGap := left + m.GetContentWidth() - (layer.GetX() + layer.Width())
+	if diff := leftGap - rightGap; diff < -1 || diff > 1 {
 		t.Errorf("splash sits %d columns from the left and %d from the right of a %d column content region",
-			boxLeft, rightGap, m.GetContentWidth())
+			leftGap, rightGap, m.GetContentWidth())
+	}
+	top := m.GetTopMargin()
+	topGap := layer.GetY() - top
+	bottomGap := top + m.GetUsableHeight() - (layer.GetY() + layer.Height())
+	if diff := topGap - bottomGap; diff < -1 || diff > 1 {
+		t.Errorf("splash sits %d rows from the top and %d from the bottom of a %d row content region",
+			topGap, bottomGap, m.GetUsableHeight())
 	}
 }
 
