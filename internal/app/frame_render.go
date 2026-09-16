@@ -1,6 +1,9 @@
 package app
 
 import (
+	"image/color"
+	"strconv"
+
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 )
@@ -136,7 +139,11 @@ func (r *frameRenderer) renderLine(out []byte, l uv.Line) []byte {
 			pen = uv.Style{}
 		}
 		if !styleEqual(&c.Style, &pen) {
-			out = append(out, r.diff(&pen, &c.Style)...)
+			if fast, ok := appendTrueColorDiff(out, &pen, &c.Style); ok {
+				out = fast
+			} else {
+				out = append(out, r.diff(&pen, &c.Style)...)
+			}
 			pen = c.Style
 		}
 
@@ -167,3 +174,76 @@ func (r *frameRenderer) renderLine(out []byte, l uv.Line) []byte {
 // resetHyperlink is ansi.ResetHyperlink(), which builds the same string on
 // every call.
 var resetHyperlink = ansi.ResetHyperlink()
+
+// appendTrueColorDiff is diff for the transition a picture makes: the same
+// attributes, and a foreground or background that is an RGBA value. It writes
+// the SGR straight into out, byte for byte what StyleDiff would build, and
+// reports false for any other transition so the memoised diff handles it.
+//
+// It exists because a wallpaper drawn as cells is thousands of cells with
+// thousands of distinct colour pairs. Each one through StyleDiff is a string
+// built from parts and a memo entry that is never hit again, which was three
+// quarters of the frame.
+func appendTrueColorDiff(out []byte, from, to *uv.Style) ([]byte, bool) {
+	if from.Attrs != to.Attrs || from.Underline != to.Underline ||
+		from.UnderlineColor != nil || to.UnderlineColor != nil {
+		return out, false
+	}
+	fromFg, ok := rgbaOrNil(from.Fg)
+	if !ok {
+		return out, false
+	}
+	fromBg, ok := rgbaOrNil(from.Bg)
+	if !ok {
+		return out, false
+	}
+	toFg, ok := rgbaOrNil(to.Fg)
+	if !ok {
+		return out, false
+	}
+	toBg, ok := rgbaOrNil(to.Bg)
+	if !ok {
+		return out, false
+	}
+	// A colour going back to the default is a reset parameter rather than a
+	// value, which the slow path spells.
+	if (from.Fg != nil && to.Fg == nil) || (from.Bg != nil && to.Bg == nil) {
+		return out, false
+	}
+	fgChanged := to.Fg != nil && (from.Fg == nil || fromFg != toFg)
+	bgChanged := to.Bg != nil && (from.Bg == nil || fromBg != toBg)
+	if !fgChanged && !bgChanged {
+		return out, false
+	}
+	out = append(out, "\x1b["...)
+	if fgChanged {
+		out = appendRGBParam(out, 38, toFg)
+	}
+	if bgChanged {
+		if fgChanged {
+			out = append(out, ';')
+		}
+		out = appendRGBParam(out, 48, toBg)
+	}
+	return append(out, 'm'), true
+}
+
+// rgbaOrNil reports whether c is something the fast path can compare: nil or
+// an RGBA value.
+func rgbaOrNil(c color.Color) (color.RGBA, bool) {
+	if c == nil {
+		return color.RGBA{}, true
+	}
+	v, ok := c.(color.RGBA)
+	return v, ok
+}
+
+func appendRGBParam(out []byte, kind int, c color.RGBA) []byte {
+	out = strconv.AppendInt(out, int64(kind), 10)
+	out = append(out, ";2;"...)
+	out = strconv.AppendInt(out, int64(c.R), 10)
+	out = append(out, ';')
+	out = strconv.AppendInt(out, int64(c.G), 10)
+	out = append(out, ';')
+	return strconv.AppendInt(out, int64(c.B), 10)
+}
