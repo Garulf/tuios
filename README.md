@@ -159,6 +159,7 @@ and prints the right command rather than overwriting it.
 - **SSH Server Mode** - Remote terminal multiplexing
 - **Web Terminal Mode** - Browser-based access (separate `tuios-web` binary)
 - **Themes** - Bundled themes plus custom themes from JSON ([docs](docs/THEMES.md))
+- **Wallpaper** - A picture on the empty desktop, as kitty graphics or half-block cells ([docs](docs/CONFIGURATION.md#the-wallpaper))
 
 ## Quick Start
 
