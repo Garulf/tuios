@@ -377,6 +377,11 @@ var optionSpecs = []Option{
 		Description: "Bar colour: quiet, border, muted, or a #RRGGBB literal",
 		Accepted:    ScrollbarTints, Default: ScrollbarTintQuiet, Color: true,
 	},
+	{
+		Path: "appearance.pane_background", Type: OptionString, Section: "appearance",
+		Description: "What a pane paints where the guest set no background: transparent lets the terminal's own background through, theme fills with the theme's, or a #RRGGBB colour",
+		Accepted:    PaneBackgrounds, Default: PaneBackgroundTransparent, Color: true,
+	},
 
 	// [appearance.sidebar]
 	{

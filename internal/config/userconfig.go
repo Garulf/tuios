@@ -185,6 +185,7 @@ type AppearanceConfig struct {
 	ShowRAM                  bool                    `toml:"show_ram"`                     // Show RAM usage in dock (default: false)
 	Theme                    string                  `toml:"theme"`                        // Color theme name (e.g., dracula, nord, my-custom-theme)
 	SharedBorders            *bool                   `toml:"shared_borders"`               // Share borders between adjacent tiled windows (default: false)
+	PaneBackground           string                  `toml:"pane_background"`              // What a pane paints where the guest set no background: transparent, theme, #RRGGBB (default: transparent)
 	// Customization
 	BorderFocusedColor     string `toml:"border_focused_color"`      // Hex color for focused pane border (e.g., "#89b4fa")
 	BorderUnfocusedColor   string `toml:"border_unfocused_color"`    // Hex color for unfocused pane border (e.g., "#585b70")
@@ -357,6 +358,20 @@ const (
 // ScrollbarStyles lists the valid values for appearance.scrollbar.style.
 var ScrollbarStyles = []string{ScrollbarStyleThin, ScrollbarStyleTrack}
 
+// Pane backgrounds. See AppearanceConfig.PaneBackground.
+const (
+	// PaneBackgroundTransparent leaves a cell the guest gave no background
+	// with none, so the host terminal's own background shows through it.
+	PaneBackgroundTransparent = "transparent"
+	// PaneBackgroundTheme paints those cells in the theme's terminal
+	// background, so a pane is a solid block whatever is behind it.
+	PaneBackgroundTheme = "theme"
+)
+
+// PaneBackgrounds lists the keyword values for appearance.pane_background; a
+// #RRGGBB literal is accepted as well.
+var PaneBackgrounds = []string{PaneBackgroundTransparent, PaneBackgroundTheme}
+
 // Scrollbar tints. See ScrollbarConfig.Tint.
 const (
 	// ScrollbarTintQuiet draws the bar in the pane's own ink dimmed toward the
@@ -507,6 +522,7 @@ func DefaultConfig() *UserConfig {
 			MasterRatio:              MasterRatioDefault,
 			ScrollColumnWidth:        ScrollColumnWidthDefault,
 			Scrollbar:                ScrollbarConfig{Style: ScrollbarStyleThin, Tint: ScrollbarTintQuiet},
+			PaneBackground:           PaneBackgroundTransparent,
 			Sidebar: SidebarConfig{
 				Position:    "left",
 				Width:       SidebarDefaultWidth,
@@ -1360,6 +1376,9 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
 	s.ScrollbarThumb = cfg.Appearance.Scrollbar.Thumb
 	s.ScrollbarTrack = cfg.Appearance.Scrollbar.Track
 	s.ScrollbarTint = cfg.Appearance.Scrollbar.Tint
+	// Assigned as written for the same reason: empty means transparent, and
+	// the getter resolves it.
+	s.PaneBackground = cfg.Appearance.PaneBackground
 
 	// The hide/show toggles are plain bools with no "unset" state, so they are
 	// assigned unconditionally: turning one off in the settings page has to

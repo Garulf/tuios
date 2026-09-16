@@ -329,6 +329,7 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
 	validateClockFormat(cfg.Appearance.ClockFormat, result)
 	validateBorderColors(cfg, result)
 	validateScrollbar(cfg, result)
+	validatePaneBackground(cfg, result)
 }
 
 // validateGlyphSet warns about a set that does not resolve, and repeats the
@@ -565,4 +566,20 @@ func defaultKeybindingPairs() map[string]bool {
 		}
 	}
 	return out
+}
+
+// validatePaneBackground warns about a pane background that is neither a
+// keyword nor a colour. The value is left in place and resolves to
+// transparent, so the warning is the only sign the key was misspelled.
+func validatePaneBackground(cfg *UserConfig, result *ValidationResult) {
+	v := cfg.Appearance.PaneBackground
+	if v == "" || slices.Contains(PaneBackgrounds, v) || IsHexColor(v) {
+		return
+	}
+	result.Warnings = append(result.Warnings, ValidationError{
+		Field: "appearance",
+		Key:   "pane_background",
+		Message: fmt.Sprintf("'%s' is not a valid value (allowed: %s, or #RRGGBB); panes stay transparent",
+			v, strings.Join(PaneBackgrounds, ", ")),
+	})
 }

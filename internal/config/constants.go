@@ -1482,3 +1482,22 @@ const (
 	// MaxNameLengthBeforeEllipsis is max length before needing ellipsis
 	MaxNameLengthBeforeEllipsis = MaxNameTruncateLength - EllipsisLength
 )
+
+// PaneBackgroundHex returns the configured pane background when it is a
+// colour literal.
+func (s *Settings) PaneBackgroundHex() (string, bool) {
+	if IsHexColor(s.PaneBackground) {
+		return s.PaneBackground, true
+	}
+	return "", false
+}
+
+// PaneBackgroundResolved is the keyword the pane background is behaving as,
+// with unset and any unknown value reading as transparent, which is what every
+// pane did before the option existed.
+func (s *Settings) PaneBackgroundResolved() string {
+	if s.PaneBackground == PaneBackgroundTheme || IsHexColor(s.PaneBackground) {
+		return s.PaneBackground
+	}
+	return PaneBackgroundTransparent
+}

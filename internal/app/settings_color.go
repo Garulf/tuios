@@ -81,6 +81,18 @@ var colorSettings = []colorSetting{
 		effective:  scrollbarTintColor,
 		namedColor: scrollbarTintKeywordColor,
 	},
+	{
+		Path:  "appearance.pane_background",
+		Label: "Pane background",
+		Desc:  "transparent: the terminal's own background shows through panes. theme: panes are solid in the theme's background",
+		Unset: "(transparent)",
+		apply: func(m *OS, v string) {
+			m.Settings.PaneBackground = v
+			m.MarkAllDirty()
+		},
+		effective:  paneBackgroundColor,
+		namedColor: paneBackgroundKeywordColor,
+	},
 }
 
 // scrollbarTintColor is the colour the scrollbar's thumb is being drawn in,

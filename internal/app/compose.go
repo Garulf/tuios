@@ -2,6 +2,7 @@ package app
 
 import (
 	"image"
+	"image/color"
 	"slices"
 
 	"charm.land/lipgloss/v2"
@@ -73,6 +74,10 @@ type cellLayer struct {
 	spill []bool
 	blank uv.Line
 	gen   uint64
+	// fill is the background painted under every cell the string left
+	// without one, or nil to leave them as they are. It is part of what the
+	// parse produced, so a change to it reparses like a change to the string.
+	fill color.Color
 }
 
 // wideMargin is the room past a layer's right edge that a head cell on the
@@ -93,15 +98,19 @@ func (cl *cellLayer) WidthMethod() uv.WidthMethod {
 //
 // w and h are the layer's own measurements, taken once by lipgloss.NewLayer;
 // the Compositor measured the string again, twice, on every frame.
-func (cl *cellLayer) update(content string, w, h int) {
-	if cl.content == content && cl.w >= 0 {
+func (cl *cellLayer) update(content string, w, h int, fill color.Color) {
+	if cl.content == content && cl.w >= 0 && cl.fill == fill {
 		return
 	}
 	cl.content = content
+	cl.fill = fill
 	cl.w, cl.h = w, h
 	cl.buf.Resize(cl.w+wideMargin, cl.h)
 	cl.blank = clearLines(cl.buf.Lines, cl.blank)
 	uv.NewStyledString(content).Draw(&cellLayerScreen{cl}, uv.Rect(0, 0, cl.w, cl.h))
+	if fill != nil {
+		fillBackground(cl.buf.Lines, cl.w, fill)
+	}
 	cl.spill = slices.Grow(cl.spill[:0], cl.h)[:cl.h]
 	for row, line := range cl.buf.Lines {
 		cl.spill[row] = false
@@ -110,6 +119,22 @@ func (cl *cellLayer) update(content string, w, h int) {
 				cl.spill[row] = true
 				break
 			}
+		}
+	}
+}
+
+// fillBackground gives every cell in the first w columns that has no
+// background the colour c. A cell with a background of its own keeps it, and
+// the trailing half of a wide glyph is left as it is, since it is drawn by
+// its head.
+func fillBackground(lines []uv.Line, w int, c color.Color) {
+	for _, line := range lines {
+		for x := 0; x < w && x < len(line); x++ {
+			cell := &line[x]
+			if cell.IsZero() || cell.Style.Bg != nil {
+				continue
+			}
+			cell.Style.Bg = c
 		}
 	}
 }
@@ -240,18 +265,25 @@ func (m *OS) composeLayers(canvas *frameCanvas, layers []*lipgloss.Layer) {
 		return layerZ(a.layer) - layerZ(b.layer)
 	})
 
+	// The pane background applies to pane layers alone: the chrome paints
+	// its own, and an overlay that leaves a cell blank means to.
+	paneFill := m.paneBackgroundFill()
 	area := canvas.Bounds()
 	for _, cl := range ordered {
 		if cl.layer == nil || !cl.bounds.Overlaps(area) {
 			continue
 		}
 		if cl.cells != nil {
+			var fill color.Color
+			if paneFill != nil && m.isWindowLayer(cl.layer.GetID()) {
+				fill = paneFill
+			}
 			// Parsed here, in draw order, and not when the layers were
 			// collected: two layers on one frame that share an id share the
 			// cellLayer too, and each has to hold its own cells at the moment
 			// it is drawn. Nothing on the frame today shares an id, and
 			// nothing enforces that either.
-			cl.cells.update(cl.layer.GetContent(), cl.layer.Width(), cl.layer.Height())
+			cl.cells.update(cl.layer.GetContent(), cl.layer.Width(), cl.layer.Height(), fill)
 			cl.cells.blit(canvas, cl.bounds.Min.X, cl.bounds.Min.Y)
 			continue
 		}

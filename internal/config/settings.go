@@ -204,6 +204,11 @@ type Settings struct {
 
 	ScrollbarTint string
 
+	// PaneBackground is what a pane paints where the guest set no background:
+	// a keyword from PaneBackgrounds or a #RRGGBB literal. See
+	// appearance.pane_background.
+	PaneBackground string
+
 	// HideScrollbar controls whether the window scrollbar is hidden.
 	// Automatically treated as true when BorderStyle == "hidden" since there is
 	// no border to draw the thumb on in that mode.
@@ -422,6 +427,7 @@ func DefaultSettings() Settings {
 		ScrollbarThumb:              "",
 		ScrollbarTrack:              "",
 		ScrollbarTint:               ScrollbarTintQuiet,
+		PaneBackground:              PaneBackgroundTransparent,
 		HideScrollbar:               false,
 		WindowTitlePosition:         "bottom",
 		WindowTitleFormat:           "",
